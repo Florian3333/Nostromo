@@ -12,7 +12,7 @@ def directory_exist():
             try: 
                 os.makedirs(gg)
                 print(f"file {gg} created!!")
-                return gg
+                
                 
             except FileExistsError:
                 u = input("Already existing!! Do you wish to continue with this directory? yes or no?")
@@ -24,8 +24,7 @@ def directory_exist():
                     return directory_exist()
         else:
             print("this directory already exit !!")
-            return directory_exist()
-    return gg   
+            return directory_exist()   
 
 def reading(label, element, personne):
     a = input(label) 
@@ -34,8 +33,7 @@ def reading(label, element, personne):
     elif a == "exit":
         exit(0)
     else:
-        personne[element] = a
-        return 
+        personne[element] = a 
 
 def reading2(label, element, personne):
     while True:
@@ -110,7 +108,7 @@ def read():
         print(oo)
 
 def stop_app():
-    return exit(0)
+    exit(0)
 
 def reduce_updating(lalist, B, C):
     while True:
