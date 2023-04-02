@@ -89,7 +89,6 @@ while True:
                             total_price-= amount_price_cancelation[0]
                             connexion.commit()
                             print("the item is canceled !!!")
-                            continue
                 if instruction_client == "list":
                     for i in list_client:
                         print(i)
