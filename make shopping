@@ -14,108 +14,132 @@ cursor = connexion.cursor()
 # Part for the employees:
 if not tag:
     cursor.execute("""CREATE TABLE jardin (ID INTEGER PRIMARY KEY, item VARCHAR, price INTEGER);""")
-
-pro_client = input("pro space (put pro) or client space (put client)")
-
-if pro_client == "pro":         
+while True:       
     while True:
-        password = input('Tape your professionnal ID please')
-        if password == "aquaman" or password == "superman":
-            print("your professionnal ID is correct !!")
-            break
-        print("your Pro ID is not correct do it again !!!")
-    while True:
-        item, price = input("to add the item name plus its price add name in first separated by a space for the price: (to stop tape the code (stop 1)), to cancel one item put (cancel)").split()
-        if item == "cancel" and price =="1":
-            number_canceled = input("what is the number of the item you wish to cancel")
-            cursor.execute("DELETE FROM jardin WHERE id=?", (number_canceled,))
-        elif item == "list" and price == "1":
+        pro_client = input("pro space (put pro) or client space (put client)")
+        if not pro_client == "pro" and not pro_client == "client":
+            continue
+        if pro_client == "pro":         
+            while True:
+                password = input('Tape your professionnal ID please')
+                if password == "aquaman" or password == "superman":
+                    print("your professionnal ID is correct !!")
+                    break
+                print("your Pro ID is not correct do it again !!!")
+            while True:
+                response = input("to add the item name plus its price add name in first separated by a space for the price: (to stop tape the code (stop 1)), to cancel one item put (cancel)")
+                oo = response.split()
+                if len(oo) == 2:
+                    item, price = oo[0], oo[1]
+                    if response == "cancel 1":
+                        number_canceled = input("what is the number of the item you wish to cancel")
+                        cursor.execute("DELETE FROM jardin WHERE id=?", (number_canceled,))
+                        connexion.commit()
+                    elif response == "list 1":
+                        cursor.execute("SELECT * FROM jardin")
+                        resultats = cursor.fetchall()
+                        for i in resultats:
+                            print(i)
+                    elif response == "stop 1":
+                        break                   
+                    else:
+                        cursor.execute('INSERT INTO jardin (item, price) VALUES (?, ?)', (item, price))
+                        connexion.commit()
+                else:
+                    print('error of format remeber must be separated by a space !!')
+                    continue
+        connexion.close()
+    
+            
+
+    # part for client
+
+        if pro_client == "client":
+            connexion = sqlite3.connect(p) 
+            cursor = connexion.cursor()
+
             cursor.execute("SELECT * FROM jardin")
-            resultats = cursor.fetchall()
+            resultats = tuple(cursor.fetchall())
+            list_shop = []
             for i in resultats:
                 print(i)
-        elif item == "stop" and price == "1":
-            break
-        else:
-            cursor.execute('INSERT INTO jardin (item, price) VALUES (?, ?)', (item, price))
-            connexion.commit()
-    connexion.close()
-    print("commercial operation finished !!")
-    exit(0)
+                list_shop.append(i)
 
-# part for client
+            list_client = []
+            total_price = 0
+            
+            while True:
+                instruction_client = input('''to add on the basket put the number associated to the list (put finish to stop the listing), if cancel one article (press cancel, for list your choice (make list))''')
+                if not instruction_client == "finish" and not instruction_client == "cancel" and not instruction_client == "list" and len(instruction_client.split()) > 1 and not instruction_client.isalpha():
+                    print("you have to add just one number non separated by a space or finish, cancel, list commands if non it is doesn't work")
+                for i in range(len(list_shop)):
+                    if instruction_client == str(list_shop[i][0]):
+                        list_client.append('ID=' + str(list_shop[i][0]) + ', ' + str(list_shop[i][1]) + " price: "+ str(list_shop[i][2]) + "euros " + "\n")
+                        total_price += list_shop[i][2]
 
-if pro_client == "client":
-    connexion = sqlite3.connect(p) 
-    cursor = connexion.cursor()
+                if instruction_client == "finish":
+                    break
+                if instruction_client == "cancel":
+                    cancellation_item = input("ID= of the item you wish to cancel from the list (just put number) finish to leave the cancelation?")
+                    for element in list_client:
+                        if cancellation_item in element:
+                            list_client.remove(element)
+                            cursor.execute(f"SELECT price FROM jardin WHERE ID = {cancellation_item}")
+                            amount_price_cancelation = cursor.fetchone()
+                            total_price-= amount_price_cancelation[0]
+                            connexion.commit()
+                            print("the item is canceled !!!")
+                            continue
+                if instruction_client == "list":
+                    for i in list_client:
+                        print(i)
+                
+    
 
-    cursor.execute("SELECT * FROM jardin")
-    resultats = tuple(cursor.fetchall())
-    list_shop = []
-    for i in resultats:
-        print(i)
-        list_shop.append(i)
+                        
+            connexion.close()
+            print("your shoppinp list if the following one:", list_client, end=' ')
+            print("for a total of " + str(total_price)+ " Euros")
+            
 
-    list_client = []
-    total_price = 0
-    while True:
-        instruction_client = input('''to add on the basket put the number associated to the list (put finish to stop the listing), if cancel one article (press cancel, for list your choice (make list))''')
-        for i in range(len(list_shop)):
-            if instruction_client == str(list_shop[i][0]):
-                list_client.append('ID=' + str(list_shop[i][0]) + ', ' + str(list_shop[i][1]) + " price: "+ str(list_shop[i][2]) + "euros " + "\n")
-                total_price += list_shop[i][2]
+        list_str = ''
+        for i in range(len(list_client)):
+            list_str += str(list_client[i])
 
-        if instruction_client == "finish":
-            break
-        if instruction_client == "cancel":
-            cancellation_item= input("ID= of the item you wish to cancel from the list (just put number)?")
-            for element in list_client:
-                if cancellation_item in element:
-                    list_client.remove(element)
-                    cursor.execute(f"SELECT price FROM jardin WHERE ID = {cancellation_item}")
-                    amount_price_cancelation = cursor.fetchone()
-                    total_price-= amount_price_cancelation[0]
-        if instruction_client == "list":
-            for i in list_client:
-                print(i)
+        # Créer un objet de code QR
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_L,
+            box_size=10,
+            border=4,
+        )
 
-                       
-connexion.close()
-print("your shoppinp list if the following one:", list_client, end=' ')
-print("for a total of " + str(total_price)+ " Euros")
+        # Ajouter les données au code QR
+        data = list_str
+        qr.add_data(data + str("\n Total = " + str(total_price)))
 
-list_str = ''
-for i in range(len(list_client)):
-    list_str += str(list_client[i])
+        # Générer le code QR
+        qr.make(fit=True)
 
+        # Créer une image du code QR
+        img = qr.make_image(fill_color="black", back_color="white")
 
-
-# Créer un objet de code QR
-qr = qrcode.QRCode(
-    version=1,
-    error_correction=qrcode.constants.ERROR_CORRECT_L,
-    box_size=10,
-    border=4,
-)
-
-# Ajouter les données au code QR
-data = list_str
-qr.add_data(data + str("\n Total = " + str(total_price)))
-
-# Générer le code QR
-qr.make(fit=True)
-
-# Créer une image du code QR
-img = qr.make_image(fill_color="black", back_color="white")
-
-nombre_aleatoire = str(random.randint(1, 100))
-# Enregistrer l'image dans un fichier
-img.save(f'C://Users//Aquaman//Desktop//mon application//qrcode{nombre_aleatoire}.png')
+        nombre_aleatoire = str(random.randint(1, 100))
+        # Enregistrer l'image dans un fichier
+        img.save(f'C://Users//Aquaman//Desktop//mon application//qrcode{nombre_aleatoire}.png')
 
 
-# Charger l'image du code QR
-img = Image.open("qrcode.png")
+        # Charger l'image du code QR
+        img = Image.open("qrcode.png")
 
-# Afficher l'image du code QR
-img.show()
+        # Afficher l'image du code QR
+        img.show()
 
+        print('operation finished')
+        print()
+
+        tt = input('would like make another shopping list ?')
+        if tt == "yes":
+            continue
+        exit(0)
+    
