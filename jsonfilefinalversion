@@ -1,0 +1,184 @@
+import json
+import os
+import random
+import qrcode
+from PIL import Image
+import configparser
+
+def password():
+    while True:
+        password = input('Tape your professionnal ID please')
+        if password == "aquaman" or password == "superman":
+            print("your professionnal ID is correct !!")
+            break
+        print("your Pro ID is not correct do it again !!!")
+
+
+def Qrcode_creation(total_price, list_client):
+        list_str = ''
+        for i in range(len(list_client)):
+            list_str += str(list_client[i])
+    # Créer un objet de code QR
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_L,
+            box_size=10,
+            border=4,
+        ) 
+        data = list_str
+        qr.add_data(data + str("\n Total = " + str(total_price)))
+        # Générer le code QR
+        qr.make(fit=True)
+        # Créer une image du code QR
+        img = qr.make_image(fill_color="black", back_color="white")
+        nombre_aleatoire = str(random.randint(1, 1000))
+        # Enregistrer l'image dans un fichier
+        img.save(f'C://Users//Aquaman//Desktop//mon application//qrcode{nombre_aleatoire}.png')
+        # Charger l'image du code QR
+        img = Image.open(f'C://Users//Aquaman//Desktop//mon application//qrcode{nombre_aleatoire}.png')
+        # Afficher l'image du code QR
+        img.show()
+        print('operation finished')
+        print()
+
+def nb_aleatoires():
+    gg = str(random.randint(1, 1000))
+    return gg
+
+def general_list(list_pro):
+    for i in range(len(list_pro)):
+        print("Number: "+ str(i+1) + str(list_pro[i]))
+
+def responsive(list_pro):
+    while True:
+        products = []
+        response = input("to add the item name plus its price add name in first separated by a space for the price: (to stop tape the code (stop 1)), to cancel one item put (cancel)")
+        if response == "cancel":
+            general_list(list_pro)
+            resp_numb = int(input('which number you\'ll change ?'))
+            for i in range(len(list_pro)):
+                if str(resp_numb) == str(i + 1):
+                    list_pro.pop(i)
+            continue
+        if response == 'stop':
+            break
+        if response == "list":
+            general_list(list_pro)
+        split_response = response.split()
+        if len(split_response) < 2:  # Vérifier que la liste a au moins 2 éléments
+            continue
+        for i in range(2):
+            products.append(split_response[i]) 
+        list_pro.append(products)
+
+    
+    with open(p, "w") as f:
+        json.dump(list_pro, f)
+    general_list(list_pro)
+    return list_pro
+
+
+def responsive_ornot(tag):
+    if tag:
+        with open(p, 'r') as file:
+            list_pro = json.load(file)
+            general_list(list_pro)      
+            list_pro == responsive(list_pro)
+            return list_pro
+    else:
+        list_pro = []
+        with open(p, 'w') as f:
+            json.dump(list_pro, f)       
+        list_pro == responsive(list_pro)
+        return list_pro
+
+
+def all_for_clients():
+    with open(p, "r") as f:
+        list_pro = json.load(f)
+        general_list(list_pro)
+        list_client = []
+        total_price = 0
+        while True:                                 
+            instruction_client = input('''to add on the basket put the number associated to the list (put finish to stop the listing), if cancel one article (press cancel, for list your choice (make list))''')
+            if not instruction_client == "finish" and not instruction_client == "cancel" and not instruction_client == "list" and len(instruction_client.split()) > 1 and not instruction_client.isalpha():
+                print("you have to add just one number non separated by a space or finish, cancel, list commands if not it doesn't work")
+            if instruction_client.isdigit():
+                instruction_client_digit = int(instruction_client) - 1
+                for i in range(len(list_pro)):
+                    if str(instruction_client_digit) == str(i):
+                        list_client.append(list_pro[i])
+                        total_price += int(list_pro[i][1])
+
+            if instruction_client == "cancel":
+                cancellation_item = int(input("ID= of the item you wish to cancel from the list (just put number) finish to leave the cancelation?"))
+                for i in range(len(list_client)):
+                    if str(cancellation_item-1) == str(i):
+                        total_price -= int(list_client[cancellation_item - 1][1])
+                        list_client.pop(cancellation_item-1)                       
+                general_list(list_client)
+
+            if instruction_client == "list":
+                general_list(list_client)
+
+            if instruction_client == "finish":
+                break
+
+    list_json1 = json.dumps(list_client)
+    with open(u, 'w') as f:
+        json.dump(list_json1, f)
+    print("your shoppinp list if the following one:", end='\n')
+    general_list(list_client)
+    print("for a total of " + str(total_price)+ " Euros")
+    Qrcode_creation(total_price, list_client)
+
+
+
+def create_config_file():
+    nombre_aleatoire1 = nb_aleatoires()
+    config = {
+        "p": "C://Users//Aquaman//Desktop//mon application//mon_fichier.json",
+        "u" : f"C://Users//Aquaman//Desktop//mon application//mon_fichier_client{nombre_aleatoire1}.json"
+    }
+    
+    with open("config.json", "w") as f:
+        json.dump(config, f)
+    
+    print("Fichier de configuration créé avec succès !")
+
+
+def load_config_file():
+    with open("config.json", "r") as f:
+        config = json.load(f)
+    
+    print("Fichier de configuration chargé avec succès !")
+    return config
+
+
+
+try:
+    with open("config.json", "r") as f:
+        pass
+except FileNotFoundError:
+    create_config_file()
+
+config = load_config_file()
+
+p = config["p"]
+u = config["u"] 
+
+
+tag = os.path.exists(p)
+
+while True:
+    pro_client = input("pro space (put pro) or client space (put client) and if exit from app (put stop 1)")
+    if pro_client == "stop 1":
+        exit(0) 
+    if not pro_client == "pro" and not pro_client == "client":
+        continue
+    if pro_client == "pro":
+        password()
+        responsive_ornot(tag)                               
+    if pro_client == "client":
+        all_for_clients()
+        continue
